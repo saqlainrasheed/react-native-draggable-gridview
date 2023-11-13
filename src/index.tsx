@@ -25,7 +25,7 @@ interface GridViewProps extends ScrollViewProps {
   renderItem: (item: any, index?: number) => JSX.Element
   renderLockedItem?: (item: any, index?: number) => JSX.Element
   locked?: (item: any, index?: number) => boolean
-  onBeginDragging?: () => void
+  onBeginDragging?: (item: any, index?: number) => void
   onPressCell?: (item: any, index?: number) => void
   onReleaseCell?: (data: any[]) => void
   onEndAddAnimation?: (item: any) => void
@@ -310,15 +310,16 @@ const GridView = memo((props: GridViewProps) => {
     []
   )
 
-  const onLongPress = useCallback(
-    (item: string, index: number, position: Point) => {
+  const onLongPress = 
+  useCallback(
+    (item: any, index: number, position: Point) => {
       if (self.animation) return
 
       // console.log('[GridView] onLongPress', item, index)
       self.startPoint = position
       self.startPointOffset = 0
       setSelectedItem(self.items[index])
-      onBeginDragging && onBeginDragging()
+      onBeginDragging && onBeginDragging(item)
     },
     [onBeginDragging]
   )
@@ -389,31 +390,26 @@ const GridView = memo((props: GridViewProps) => {
 
   const onRelease = useCallback(() => {
     if (!self.startPoint) return
-    // console.log('[GridView] onRelease')
+
     cancelAnimationFrame(self.animationId)
     self.animationId = undefined
     self.startPoint = undefined
     const { grid, items } = self
     const itemIndex = _.findIndex(items, (v) => v.item == selectedItem.item)
-    if(itemIndex >= 0 ){
-      const _newPos = grid[itemIndex];
+    itemIndex >= 0 &&
       Animated.timing(selectedItem.pos, {
-        toValue: _newPos,
+        toValue: grid[itemIndex],
         easing: Easing.out(Easing.quad),
         duration: 200,
         useNativeDriver: true,
-      }).start(() => {
-        items[itemIndex].pos.setValue({ x: _newPos.x, y: _newPos.y });
-        onEndRelease();
-      })
-    }
-  }, [selectedItem])
-
-  const onEndRelease = useCallback(() => {
-    // console.log('[GridView] onEndRelease')
-    onReleaseCell && onReleaseCell(self.items.map((v) => v.item))
-    setSelectedItem(undefined)
-  }, [onReleaseCell])
+      }).start(onEndRelease)
+    }, [selectedItem])
+    
+    const onEndRelease = useCallback(() => {
+      // console.log('[GridView] onEndRelease')
+      onReleaseCell && onReleaseCell(self.items.map((v) => v.item))
+      setSelectedItem(undefined)
+    }, [onReleaseCell, selectedItem])
 
   //-------------------------------------------------- Render
   const _renderItem = useCallback(
@@ -434,7 +430,7 @@ const GridView = memo((props: GridViewProps) => {
       }
 
       const { item, pos, opacity } = value
-      // console.log('[GridView] renderItem', index, pos)
+      // console.log('[GridView] renderItem', index, id)
       const { cellSize, grid } = self
       const p = grid[index]
       const isLocked = locked && locked(item, index)
@@ -444,11 +440,10 @@ const GridView = memo((props: GridViewProps) => {
       let style: ViewStyle = {
         position: 'absolute',
         width: cellSize,
-        height: cellSize,
+        height: cellSize
       }
 
-      const isSelected = selectedItem && value.item === selectedItem.item;
-      if (!isLocked && selectedItem && isSelected)
+      if (!isLocked && selectedItem && value.item == selectedItem.item)
         style = { zIndex: 1, ...style, ...selectedStyle }
 
       return isLocked ? (
@@ -496,13 +491,14 @@ const GridView = memo((props: GridViewProps) => {
         marginBottom: bottom,
         marginLeft: left,
         marginRight: right,
+        height: Dimensions.get('screen').height + 150
       }}
     >
-      <View
+      {/* <View
         style={{
-          height: top + self.numRows * self.cellSize + bottom,
+          height: Dimensions.get('screen').height + 100
         }}
-      />
+      /> */}
       {self.items.map((v, i) => _renderItem(v, i))}
     </ScrollView>
   )
