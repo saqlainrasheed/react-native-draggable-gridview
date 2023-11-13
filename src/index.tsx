@@ -388,7 +388,9 @@ const GridView = memo((props: GridViewProps) => {
     [selectedItem]
   )
 
-  const onRelease = useCallback(() => {
+  const onRelease = 
+  // useCallback(
+    () => {
     if (!self.startPoint) return
 
     cancelAnimationFrame(self.animationId)
@@ -403,13 +405,18 @@ const GridView = memo((props: GridViewProps) => {
         duration: 200,
         useNativeDriver: true,
       }).start(onEndRelease)
-    }, [selectedItem])
+
+    }
+    // , [selectedItem])
     
-    const onEndRelease = useCallback(() => {
+    const onEndRelease = 
+    // useCallback(
+      (_selectedItem) => {
       // console.log('[GridView] onEndRelease')
       onReleaseCell && onReleaseCell(self.items.map((v) => v.item))
       setSelectedItem(undefined)
-    }, [onReleaseCell, selectedItem])
+    }
+    // , [onReleaseCell, selectedItem])
 
   //-------------------------------------------------- Render
   const _renderItem = useCallback(
@@ -440,7 +447,7 @@ const GridView = memo((props: GridViewProps) => {
       let style: ViewStyle = {
         position: 'absolute',
         width: cellSize,
-        height: cellSize
+        height: cellSize,
       }
 
       if (!isLocked && selectedItem && value.item == selectedItem.item)
