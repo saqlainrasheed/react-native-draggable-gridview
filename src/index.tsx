@@ -459,7 +459,7 @@ const GridView = memo((props: GridViewProps) => {
         </View>
       ) : (
         <Animated.View
-          {...self.panResponder.panHandlers}
+          {...(item?.data !== null && self.panResponder.panHandlers)}
           key={key}
           style={[
             style,
